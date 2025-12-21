@@ -78,40 +78,111 @@
             opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
-        .calc-card:active { transform: scale(0.98); }
+        
+        /* Z-INDEX PARA CALCULADORA ENCIMA DE TODO */
+        #calculatorModal { z-index: 100; }
+        #dialogModal { z-index: 200; }
 
         .chart-point:hover { cursor: pointer; transform: scale(1.5); transform-origin: center; transition: transform 0.2s; }
 
         /* Estilos Calendario Manual */
         .calendar-day {
-            aspect-ratio: 1;
+            aspect-ratio: 1; display: flex; align-items: center; justify-content: center;
+            border-radius: 8px; font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+            color: rgba(255,255,255,0.7);
+        }
+        .calendar-day:hover { background: rgba(255,255,255,0.1); color: white; }
+        .calendar-day.selected { font-weight: 800; color: #1a1b26; box-shadow: 0 0 10px rgba(0,0,0,0.3); }
+        .calendar-day.has-data { background: rgba(0, 0, 0, 0.6); color: #86efac; border: 1px solid rgba(255,255,255,0.1); }
+        .week-indicator { font-size: 0.65rem; text-transform: uppercase; color: rgba(255,255,255,0.3); text-align: center; margin-bottom: 4px; }
+        .manual-week-btn { position: relative; overflow: hidden; }
+        .manual-week-btn.filled { background-color: rgba(0, 0, 0, 0.6); color: #d1d5db; border: 1px solid rgba(255,255,255,0.2); }
+        .manual-week-btn.filled::after { content: '✓'; position: absolute; top: 2px; right: 4px; font-size: 0.6rem; color: #4ade80; }
+
+        /* Estilos EXPANDED CHART (Zoom) */
+        .chart-zoom-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px);
+            z-index: 60; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .chart-zoom-overlay.open { opacity: 1; pointer-events: auto; }
+        
+        .chart-zoom-card {
+            width: 95%; max-width: 800px;
+            height: auto; min-height: 50vh; max-height: 85vh;
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px; padding: 24px;
+            transform: scale(0.9); transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; flex-direction: column;
+            overflow: hidden; 
+        }
+        .chart-zoom-overlay.open .chart-zoom-card { transform: scale(1); }
+        
+        #chartContainer { cursor: zoom-in; }
+
+        /* --- Estilos Calculadora Moderna Glass iOS --- */
+        .calc-btn {
+            appearance: none;
+            outline: none;
+            border: none;
+            background: rgba(255, 255, 255, 0.15); /* Base glass */
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+            font-size: 1.5rem;
+            font-weight: 400;
+            border-radius: 50%; /* Círculo perfecto */
+            aspect-ratio: 1 / 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 0.75rem;
             cursor: pointer;
-            transition: all 0.2s;
-            color: rgba(255,255,255,0.7);
+            transition: transform 0.1s ease, background 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-        .calendar-day:hover {
-            background: rgba(255,255,255,0.1);
-            color: white;
+        
+        /* Efecto de pulsación */
+        .calc-btn:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.3);
         }
-        .calendar-day.selected {
-            font-weight: 800;
-            color: #1a1b26;
-            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+
+        /* Botones de Operadores (Naranja Glass iOS) */
+        .calc-btn.op {
+            background: rgba(255, 159, 10, 0.85);
+            border-color: rgba(255, 159, 10, 0.4);
+            font-weight: 600;
+            font-size: 1.75rem;
         }
-        .calendar-day.in-range {
-            background: rgba(255,255,255,0.05);
+        .calc-btn.op:active {
+            background: rgba(255, 159, 10, 1);
         }
-        .week-indicator {
-            font-size: 0.65rem;
-            text-transform: uppercase;
-            color: rgba(255,255,255,0.3);
-            text-align: center;
-            margin-bottom: 4px;
+
+        /* Botones de Función Superior (Gris Claro Glass) */
+        .calc-btn.func {
+            background: rgba(165, 165, 165, 0.4);
+            color: #fff;
+            font-weight: 500;
+            font-size: 1.25rem;
+        }
+        
+        /* Botones Numéricos (Gris Oscuro Glass) */
+        .calc-btn.num {
+            background: rgba(51, 51, 51, 0.5);
+        }
+        .calc-btn.num:hover {
+            background: rgba(60, 60, 60, 0.6);
+        }
+
+        /* Botón Cero (Pastilla) */
+        .calc-btn.zero {
+            grid-column: span 2;
+            aspect-ratio: auto;
+            border-radius: 9999px; /* Pill shape */
+            justify-content: flex-start;
+            padding-left: 28px;
         }
     </style>
 </head>
@@ -281,15 +352,22 @@
                 </div>
             </div>
 
-            <div class="relative h-72 w-full bg-black/10 rounded-2xl border border-white/5 p-4 flex flex-col justify-end group overflow-hidden">
+            <div onclick="expandChart()" class="relative h-72 w-full bg-black/10 rounded-2xl border border-white/5 p-4 flex flex-col justify-end group overflow-hidden transition-all hover:bg-black/20 hover:border-white/10 cursor-zoom-in" id="mainChartWrapper">
+                <div class="absolute top-4 right-4 bg-white/10 p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                </div>
+                
                 <div id="chartContainer" class="w-full h-full relative">
                     <p class="absolute inset-0 flex items-center justify-center text-white/20 text-sm">No hay registros guardados en este mes.<br><span class="text-xs opacity-50">(Deslizá para ver otros meses)</span></p>
                 </div>
-                <div class="flex justify-between w-full text-[10px] text-white/40 uppercase tracking-widest mt-2 px-2">
-                    <span class="w-1/4 text-center">Sem 1</span>
-                    <span class="w-1/4 text-center">Sem 2</span>
-                    <span class="w-1/4 text-center">Sem 3</span>
-                    <span class="w-1/4 text-center">Sem 4</span>
+                <!-- Fixed labels to align with data points -->
+                <div class="absolute bottom-0 left-0 w-full px-2 pointer-events-none">
+                    <div class="flex w-full text-[10px] text-white/40 uppercase tracking-widest pb-1">
+                        <span class="w-1/4 text-center">Sem 1</span>
+                        <span class="w-1/4 text-center">Sem 2</span>
+                        <span class="w-1/4 text-center">Sem 3</span>
+                        <span class="w-1/4 text-center">Sem 4</span>
+                    </div>
                 </div>
             </div>
 
@@ -332,36 +410,89 @@
         <p class="text-center text-white/30 text-xs mt-8 font-medium">Tus datos se guardan en este dispositivo.</p>
     </div>
 
-    <!-- MODAL CALCULADORA -->
-    <div id="calculatorModal" class="modal-overlay">
-        <!-- (Contenido Calculadora igual que antes) -->
-        <div class="glass-panel w-full max-w-lg mx-4 rounded-3xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="p-5 border-b border-white/10 flex justify-between items-center bg-black/20">
-                <div class="flex items-center gap-3">
-                    <div class="text-cyan-400 bg-cyan-400/20 p-2 rounded-lg"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg></div>
-                    <div><h3 class="font-bold text-white text-lg">Calculadora</h3><p class="text-xs text-white/50">Caja</p></div>
-                </div>
-                <div class="text-right"><p class="text-xs text-white/50 uppercase tracking-widest font-bold">Total</p><p id="calcTotalDisplay" class="text-3xl font-black text-cyan-400 drop-shadow-md">$0</p></div>
+    <!-- MODAL GRÁFICO EXPANDIDO -->
+    <div id="chartZoomOverlay" class="chart-zoom-overlay">
+        <div class="chart-zoom-card">
+            <button onclick="closeExpandedChart()" class="absolute top-4 right-4 bg-white/10 hover:bg-white/20 text-white rounded-full p-2 z-50">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+            <div class="text-center mb-4 pt-2 flex-shrink-0">
+                <h2 id="expandedMonthDisplay" class="text-2xl font-bold text-white uppercase tracking-widest">ENERO 2024</h2>
+                <p class="text-white/50 text-sm">Deslizá para navegar</p>
             </div>
-            <div class="p-4 overflow-y-auto flex-1 bg-black/10">
-                <div id="addDenomContainer" class="hidden mb-4 p-3 bg-white/5 rounded-xl border border-white/10">
-                    <div class="flex gap-2">
-                        <input type="number" id="newDenomInput" class="glass-input w-full p-2 rounded-lg" placeholder="Valor">
-                        <button onclick="calcAddNew()" class="bg-emerald-500/80 hover:bg-emerald-500 text-white px-4 rounded-lg font-bold">OK</button>
-                        <button onclick="toggleAddDenom()" class="bg-white/10 hover:bg-white/20 text-white px-3 rounded-lg">X</button>
+            <!-- Contenedor flexible para el gráfico, asegura espacio -->
+            <div class="flex-1 w-full relative min-h-0" id="expandedChartContainer">
+                <!-- Se clona el gráfico aquí -->
+            </div>
+            <!-- Etiquetas fijas alineadas -->
+            <div class="flex justify-between w-full text-xs text-white/40 uppercase tracking-widest mt-4 px-2 flex-shrink-0">
+                <span class="w-1/4 text-center">Semana 1</span>
+                <span class="w-1/4 text-center">Semana 2</span>
+                <span class="w-1/4 text-center">Semana 3</span>
+                <span class="w-1/4 text-center">Semana 4</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CALCULADORA GLASS iOS -->
+    <div id="calculatorModal" class="modal-overlay">
+        <div class="glass-panel w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl backdrop-blur-xl border border-white/20">
+            <div class="p-6 pb-2">
+                <div class="text-right mb-4">
+                    <div id="calcExpression" class="text-white/50 text-sm h-6 font-mono tracking-wide"></div>
+                    <div id="calcDisplay" class="text-5xl font-light text-white font-sans tracking-tight leading-none">0</div>
+                    <div class="flex justify-end items-center gap-2 mt-2">
+                        <span class="text-[10px] text-green-400 font-bold uppercase tracking-wider bg-green-500/10 px-2 py-1 rounded">Tu Ganancia:</span>
+                        <span id="calcProfitDisplay" class="text-sm font-bold text-green-400">$0</span>
                     </div>
                 </div>
-                <div id="calcGrid" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
             </div>
-            <div class="p-4 border-t border-white/10 bg-black/20 flex gap-2 justify-between">
-                <div class="flex gap-2">
-                    <button onclick="toggleAddDenom()" class="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/60 hover:text-emerald-400 border border-white/5"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg></button>
-                    <button onclick="calcReset()" class="p-3 bg-white/5 hover:bg-white/10 rounded-xl text-white/60 hover:text-rose-400 border border-white/5"><svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg></button>
-                </div>
-                <div class="flex gap-2 w-full justify-end">
-                    <button onclick="closeCalculator()" class="px-6 py-3 rounded-xl font-bold text-white/70 hover:bg-white/10">Cancelar</button>
-                    <button onclick="applyCalculatorTotal()" class="px-6 py-3 rounded-xl font-bold bg-white text-pink-600 hover:bg-white/90 shadow-lg active:scale-95">Aplicar</button>
-                </div>
+            
+            <div class="p-5 pb-8 grid grid-cols-4 gap-3 bg-black/10">
+                <!-- Fila 1 -->
+                <button onclick="calcInput('C')" class="calc-btn func">C</button>
+                <button onclick="calcInput('DEL')" class="calc-btn func">⌫</button>
+                <button class="calc-btn func pointer-events-none opacity-50"></button> <!-- Spacer visual -->
+                <button onclick="calcInput('/')" class="calc-btn op">÷</button>
+                
+                <!-- Fila 2 -->
+                <button onclick="calcInput('7')" class="calc-btn num">7</button>
+                <button onclick="calcInput('8')" class="calc-btn num">8</button>
+                <button onclick="calcInput('9')" class="calc-btn num">9</button>
+                <button onclick="calcInput('*')" class="calc-btn op">×</button>
+                
+                <!-- Fila 3 -->
+                <button onclick="calcInput('4')" class="calc-btn num">4</button>
+                <button onclick="calcInput('5')" class="calc-btn num">5</button>
+                <button onclick="calcInput('6')" class="calc-btn num">6</button>
+                <button onclick="calcInput('-')" class="calc-btn op">−</button>
+                
+                <!-- Fila 4 -->
+                <button onclick="calcInput('1')" class="calc-btn num">1</button>
+                <button onclick="calcInput('2')" class="calc-btn num">2</button>
+                <button onclick="calcInput('3')" class="calc-btn num">3</button>
+                <button onclick="calcInput('+')" class="calc-btn op">+</button>
+                
+                <!-- Fila 5 -->
+                <button onclick="calcInput('0')" class="calc-btn num zero">0</button>
+                <button onclick="calcInput('.')" class="calc-btn num">.</button>
+                <button onclick="calcInput('=')" class="calc-btn op">=</button>
+            </div>
+            
+            <div class="px-5 pb-6 flex justify-between gap-3">
+                <button onclick="closeCalculator()" class="flex-1 py-3.5 rounded-2xl font-bold text-white/70 hover:bg-white/10 transition-colors text-sm">Cancelar</button>
+                <button onclick="applyCalculatorResult()" class="flex-1 py-3.5 rounded-2xl font-bold bg-white text-black hover:bg-gray-100 shadow-lg active:scale-95 transition-transform text-sm">Aplicar Valor</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- MODAL DIÁLOGO (REEMPLAZO DE ALERT/CONFIRM) -->
+    <div id="dialogModal" class="modal-overlay">
+        <div class="glass-panel w-full max-w-sm mx-4 rounded-3xl p-6 text-center transform scale-95 transition-transform duration-200" id="dialogContent">
+            <h3 id="dialogTitle" class="text-xl font-bold text-white mb-2">Atención</h3>
+            <p id="dialogMsg" class="text-white/80 mb-6 text-sm"></p>
+            <div class="flex gap-3 justify-center" id="dialogActions">
+                <!-- Buttons injected by JS -->
             </div>
         </div>
     </div>
@@ -370,43 +501,46 @@
     <div id="manualModal" class="modal-overlay">
         <div class="glass-panel w-full max-w-sm mx-4 rounded-3xl p-6 relative">
             <button onclick="closeManualModal()" class="absolute top-4 right-4 text-white/50 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
-            
             <h3 class="text-xl font-bold text-white mb-4">Carga Manual Histórica</h3>
-            <p class="text-xs text-white/50 mb-6">Seleccioná un mes y tocá una fecha para cargar la semana correspondiente.</p>
-            
+            <p class="text-xs text-white/50 mb-6">Seleccioná un mes y la semana a cargar/modificar.</p>
             <div class="space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-white/60 mb-2 ml-1 uppercase">Mes & Año</label>
                     <div class="flex gap-2">
-                        <select id="manualMonth" class="glass-input w-2/3 rounded-xl p-3 outline-none cursor-pointer text-sm">
-                            <!-- JS Llenará esto -->
-                        </select>
-                        <select id="manualYear" class="glass-input w-1/3 rounded-xl p-3 outline-none cursor-pointer text-sm">
-                            <!-- JS Llenará esto -->
-                        </select>
+                        <select id="manualMonth" class="glass-input w-2/3 rounded-xl p-3 outline-none cursor-pointer text-sm"></select>
+                        <select id="manualYear" class="glass-input w-1/3 rounded-xl p-3 outline-none cursor-pointer text-sm"></select>
                     </div>
                 </div>
-                
                 <div>
                     <label class="block text-xs font-bold text-white/60 mb-2 ml-1 uppercase">Seleccionar Semana</label>
                     <div class="glass-input rounded-xl p-3">
                         <div class="grid grid-cols-7 mb-2">
                             <div class="week-indicator">Lun</div><div class="week-indicator">Mar</div><div class="week-indicator">Mié</div><div class="week-indicator">Jue</div><div class="week-indicator">Vie</div><div class="week-indicator">Sáb</div><div class="week-indicator">Dom</div>
                         </div>
-                        <div id="manualCalendarContainer" class="grid grid-cols-7 gap-1">
-                            <!-- Calendario JS -->
-                        </div>
+                        <div id="manualCalendarContainer" class="grid grid-cols-7 gap-1"></div>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2 mt-4">
+                        <button onclick="selectManualWeekFromButton(1)" class="manual-week-btn w-full h-10 rounded-lg glass-input hover:bg-white/20 font-bold" data-wk="1">1</button>
+                        <button onclick="selectManualWeekFromButton(2)" class="manual-week-btn w-full h-10 rounded-lg glass-input hover:bg-white/20 font-bold" data-wk="2">2</button>
+                        <button onclick="selectManualWeekFromButton(3)" class="manual-week-btn w-full h-10 rounded-lg glass-input hover:bg-white/20 font-bold" data-wk="3">3</button>
+                        <button onclick="selectManualWeekFromButton(4)" class="manual-week-btn w-full h-10 rounded-lg glass-input hover:bg-white/20 font-bold" data-wk="4">4</button>
+                        <button onclick="selectManualWeekFromButton(5)" class="manual-week-btn w-full h-10 rounded-lg glass-input hover:bg-white/20 font-bold" data-wk="5">5</button>
                     </div>
                     <p id="selectedWeekDisplay" class="text-center text-sm font-bold text-white mt-2 h-5"></p>
                     <input type="hidden" id="manualWeekSelect">
                 </div>
-
                 <div>
-                    <label class="block text-xs font-bold text-white/60 mb-1 ml-1 uppercase">Total Facturado ($)</label>
-                    <input type="number" id="manualAmount" class="glass-input w-full rounded-xl p-3 font-bold text-lg" placeholder="0">
+                    <label class="block text-xs font-bold text-white/60 mb-1 ml-1 uppercase text-emerald-400">Tu Ganancia (Lo que te llevás) ($)</label>
+                    <div class="flex items-center gap-2">
+                        <!-- NUEVO BOTÓN CALCULADORA AQUÍ -->
+                        <button onclick="openCalculator('manualAmount')" class="control-btn w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold bg-indigo-500/20 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/40 hover:text-white transition-all shadow-[0_0_10px_rgba(99,102,241,0.1)] flex-shrink-0">
+                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
+                        </button>
+                        <input type="number" id="manualAmount" class="glass-input w-full rounded-xl p-3 font-bold text-lg" placeholder="0">
+                    </div>
+                    <p class="text-[10px] text-white/40 mt-1">El sistema calculará el total facturado automáticamente.</p>
                 </div>
-
-                <button onclick="saveManualEntry()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl mt-4 shadow-lg active:scale-95">Guardar Registro</button>
+                <button id="btnSaveManual" onclick="saveManualEntry()" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl mt-4 shadow-lg active:scale-95 transition-all">Guardar Registro</button>
             </div>
         </div>
     </div>
@@ -425,15 +559,15 @@
         let selectedDays = []; 
         const staticIdsToSave = ['precioReferencia', 'metaLiquida'];
 
-        // VARIABLES HISTORIAL Y COLORES
         let historyData = []; 
         let currentViewDate = new Date();
         const monthColors = ['#22d3ee', '#f472b6', '#4ade80', '#fbbf24', '#a78bfa', '#fb7185', '#60a5fa', '#f87171', '#34d399', '#818cf8', '#facc15', '#2dd4bf'];
 
-        // VARIABLES CALCULADORA
-        let calcDenominations = [60000, 50000, 30000, 20000, 15000, 14000, 12000, 8000, 6000];
-        let calcCounts = {};
+        // VARIABLES CALCULADORA STANDARD
+        let calcExpression = '';
+        let calcResult = 0;
         let currentCalcInputId = null;
+        let isChartExpanded = false;
 
         // FUNCIONES UTILITARIAS
         const formatCurrency = (num) => {
@@ -446,6 +580,48 @@
             indicator.classList.remove('opacity-0');
             setTimeout(() => { indicator.classList.add('opacity-0'); }, 1500);
         };
+        
+        // --- SISTEMA DE DIÁLOGO PERSONALIZADO (NO-ALERT) ---
+        function showDialog(title, msg, onConfirm, onCancel, confirmText = "Aceptar", cancelText = "Cancelar") {
+            const modal = document.getElementById('dialogModal');
+            const content = document.getElementById('dialogContent');
+            const titleEl = document.getElementById('dialogTitle');
+            const msgEl = document.getElementById('dialogMsg');
+            const actionsEl = document.getElementById('dialogActions');
+            
+            titleEl.textContent = title;
+            msgEl.textContent = msg;
+            actionsEl.innerHTML = '';
+
+            // Cancel Button (if onCancel exists or simple alert)
+            if (onCancel || !onConfirm) { // If it's a confirm or just a notification
+                const btnCancel = document.createElement('button');
+                btnCancel.className = "px-6 py-2 rounded-xl text-white/70 hover:bg-white/10 font-medium transition-colors border border-transparent";
+                btnCancel.textContent = onConfirm ? cancelText : "Cerrar";
+                btnCancel.onclick = () => {
+                    modal.classList.remove('open');
+                    setTimeout(() => { content.classList.remove('scale-100'); content.classList.add('scale-95'); }, 200);
+                    if (onCancel) onCancel();
+                };
+                actionsEl.appendChild(btnCancel);
+            }
+
+            // Confirm Button (only if callback provided)
+            if (onConfirm) {
+                const btnConfirm = document.createElement('button');
+                btnConfirm.className = "px-6 py-2 rounded-xl bg-white text-pink-600 font-bold hover:bg-gray-100 transition-colors shadow-lg";
+                btnConfirm.textContent = confirmText;
+                btnConfirm.onclick = () => {
+                    modal.classList.remove('open');
+                    setTimeout(() => { content.classList.remove('scale-100'); content.classList.add('scale-95'); }, 200);
+                    onConfirm();
+                };
+                actionsEl.appendChild(btnConfirm);
+            }
+            
+            modal.classList.add('open');
+            setTimeout(() => { content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
+        }
 
         // GESTIÓN DE DATOS
         function saveData(event) {
@@ -486,9 +662,6 @@
                     }
                 }
             }
-
-            const savedDenoms = localStorage.getItem('calc-denoms');
-            if(savedDenoms) calcDenominations = JSON.parse(savedDenoms);
             
             renderHistorySection();
             setupSwipeGestures();
@@ -535,18 +708,29 @@
         }
 
         function setupSwipeGestures() {
-            const section = document.getElementById('historySection');
-            let touchStartX = 0;
-            let touchEndX = 0;
+            const targets = [document.getElementById('historySection'), document.getElementById('chartZoomOverlay')];
+            targets.forEach(section => {
+                let touchStartX = 0;
+                let touchEndX = 0;
+                section.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
+                section.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
+                function handleSwipe() {
+                    const threshold = 50; 
+                    if (touchEndX < touchStartX - threshold) changeMonth(1); 
+                    if (touchEndX > touchStartX + threshold) changeMonth(-1); 
+                }
+            });
+        }
 
-            section.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; }, {passive: true});
-            section.addEventListener('touchend', e => { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }, {passive: true});
+        function expandChart() {
+            isChartExpanded = true;
+            document.getElementById('chartZoomOverlay').classList.add('open');
+            renderHistorySection(); 
+        }
 
-            function handleSwipe() {
-                const threshold = 50; 
-                if (touchEndX < touchStartX - threshold) changeMonth(1); 
-                if (touchEndX > touchStartX + threshold) changeMonth(-1); 
-            }
+        function closeExpandedChart() {
+            isChartExpanded = false;
+            document.getElementById('chartZoomOverlay').classList.remove('open');
         }
 
         function renderHistorySection() {
@@ -554,7 +738,9 @@
             const currentMonthIdx = currentViewDate.getMonth();
             const currentYear = currentViewDate.getFullYear();
             
-            document.getElementById('currentMonthDisplay').textContent = `${monthNames[currentMonthIdx]} ${currentYear}`;
+            const displayText = `${monthNames[currentMonthIdx]} ${currentYear}`;
+            document.getElementById('currentMonthDisplay').textContent = displayText;
+            document.getElementById('expandedMonthDisplay').textContent = displayText; 
 
             const monthlyData = historyData.filter(item => {
                 const itemDate = new Date(item.date);
@@ -571,7 +757,8 @@
                 return itemDate.getFullYear() === prevYear && itemDate.getMonth() === prevMonthIdx;
             });
 
-            renderChart(monthlyData, prevMonthlyData, currentMonthIdx, prevMonthIdx);
+            renderChart(monthlyData, prevMonthlyData, currentMonthIdx, prevMonthIdx, document.getElementById('chartContainer'));
+            renderChart(monthlyData, prevMonthlyData, currentMonthIdx, prevMonthIdx, document.getElementById('expandedChartContainer'));
 
             const monthBruto = monthlyData.reduce((acc, curr) => acc + curr.totalBruto, 0);
             const monthUser = monthBruto * tuPorcentaje;
@@ -589,12 +776,11 @@
             document.getElementById('yearTotalCompany').textContent = formatCurrency(yearCompany);
         }
 
-        function renderChart(currentData, prevData, currentMonthIdx, prevMonthIdx) {
-            const container = document.getElementById('chartContainer');
+        function renderChart(currentData, prevData, currentMonthIdx, prevMonthIdx, container) {
             container.innerHTML = '';
 
             if (currentData.length === 0 && prevData.length === 0) {
-                container.innerHTML = '<p class="absolute inset-0 flex items-center justify-center text-white/20 text-sm">No hay registros guardados en este mes.<br><span class="text-xs opacity-50">(Deslizá para ver otros meses)</span></p>';
+                container.innerHTML = '<p class="absolute inset-0 flex items-center justify-center text-white/20 text-sm">No hay registros.<br><span class="text-xs opacity-50">Deslizá para ver más.</span></p>';
                 return;
             }
 
@@ -609,7 +795,6 @@
             svg.setAttribute("preserveAspectRatio", "none");
             svg.style.overflow = 'visible';
 
-            // DIBUJAR GRID
             const gridLines = [0, 25, 50, 75, 100];
             gridLines.forEach(y => {
                 const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -620,14 +805,13 @@
                 svg.appendChild(line);
             });
 
-            // Función para obtener coordenadas X fijas por semana (4 semanas)
             const getXForDate = (isoDate) => {
                 const d = new Date(isoDate);
                 const day = d.getDate();
                 if (day <= 7) return 12.5;
                 if (day <= 14) return 37.5;
                 if (day <= 21) return 62.5;
-                return 87.5; // Días 22+ van al final
+                return 87.5; 
             };
 
             const getPoints = (data) => {
@@ -641,7 +825,6 @@
                 return points;
             };
 
-            // 1. Línea Fantasma
             if (prevData.length > 0) {
                 prevData.sort((a,b) => new Date(a.date) - new Date(b.date));
                 const prevPoints = getPoints(prevData);
@@ -655,21 +838,18 @@
                 svg.appendChild(prevLine);
             }
 
-            // 2. Línea Actual
             if (currentData.length > 0) {
                 currentData.sort((a,b) => new Date(a.date) - new Date(b.date));
                 const currentColor = monthColors[currentMonthIdx];
                 const currentPoints = getPoints(currentData);
                 
-                // Dibujar puntos interactivos
                 currentData.forEach((item) => {
                     const x = getXForDate(item.date);
                     const heightPerc = (item.netUser / maxVal) * 80;
                     const y = 100 - heightPerc;
 
-                    // HTML Dot Overlay
                     const pointWrapper = document.createElement('div');
-                    pointWrapper.className = 'absolute group flex flex-col items-center pointer-events-auto';
+                    pointWrapper.className = 'absolute group flex flex-col items-center pointer-events-auto chart-point';
                     pointWrapper.style.left = `${x}%`;
                     pointWrapper.style.bottom = `${heightPerc}%`;
                     pointWrapper.style.transform = 'translateX(-50%)'; 
@@ -677,7 +857,7 @@
 
                     const d = new Date(item.date);
                     let weekNum = Math.ceil(d.getDate() / 7);
-                    if (weekNum > 4) weekNum = 4; // Clamp a 4 semanas visuales
+                    if (weekNum > 4) weekNum = 4;
                     
                     pointWrapper.innerHTML = `
                         <div class="absolute bottom-full mb-2 opacity-0 group-hover:opacity-100 transition-opacity bg-black/90 border border-white/10 text-white text-[10px] p-2 rounded whitespace-nowrap z-10 pointer-events-none shadow-xl">
@@ -697,7 +877,6 @@
                     polyline.setAttribute("stroke-width", "3");
                     polyline.setAttribute("filter", "drop-shadow(0 0 4px " + currentColor + "80)"); 
                     
-                    // Relleno degradado
                     const firstX = getXForDate(currentData[0].date);
                     const lastX = getXForDate(currentData[currentData.length-1].date);
                     const polygonPoints = `${firstX},100 ${currentPoints} ${lastX},100`;
@@ -705,7 +884,7 @@
                     const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
                     polygon.setAttribute("points", polygonPoints);
                     
-                    const gradId = "grad" + currentMonthIdx;
+                    const gradId = "grad" + currentMonthIdx + Math.random().toString(36).substr(2, 9); 
                     let defs = svg.querySelector('defs');
                     if(!defs) {
                         defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
@@ -981,26 +1160,31 @@
             let totalBruto = 0;
             diasInputs.forEach(input => { totalBruto += parseFloat(input.value) || 0; });
             
+            // Verificar Meta
             const gananciaReal = totalBruto * tuPorcentaje;
             const meta = parseFloat(document.getElementById('metaLiquida').value) || 0;
 
             if (totalBruto > 0) {
                 if (gananciaReal >= meta && meta > 0) {
                     saveToHistory(totalBruto);
-                    alert("¡Felicidades! Meta superada. Semana guardada automáticamente en tu historial.");
-                    resetUI();
+                    showDialog("¡Felicitaciones! 🎉", "Meta superada. La semana se ha guardado automáticamente en tu historial.", () => {
+                         resetUI();
+                    }, null, "Genial");
                 } else {
-                    if (confirm("No alcanzaste la meta esta semana. ¿Querés guardar este registro en tu historial de todos modos?")) {
+                    showDialog("Meta no alcanzada", "No alcanzaste la meta esta semana. ¿Querés guardar este registro en tu historial de todos modos?", 
+                    () => { // SÍ, guardar
                         saveToHistory(totalBruto);
                         resetUI();
-                    } else {
-                        if (confirm("¿Seguro que querés borrar los datos SIN guardar? Se perderá el registro de esta semana.")) {
-                            resetUI();
-                        }
-                    }
+                    }, 
+                    () => { // NO, preguntar si borrar
+                         showDialog("¿Borrar sin guardar?", "Se perderán los datos de esta semana permanentemente.", 
+                         () => { // SÍ borrar
+                             resetUI();
+                         }, null, "Borrar", "Cancelar");
+                    }, "Guardar", "No guardar");
                 }
             } else {
-                if(confirm("¿Reiniciar semana? No hay datos ingresados.")) resetUI();
+                showDialog("Reiniciar", "¿Reiniciar semana? No hay datos ingresados.", () => resetUI(), null, "Sí", "Cancelar");
             }
         });
 
@@ -1016,7 +1200,6 @@
             const currentY = new Date().getFullYear();
             const today = new Date();
 
-            // Populate Years
             for (let i = currentY - 1; i <= currentY + 1; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
@@ -1025,7 +1208,6 @@
                 selectYear.appendChild(opt);
             }
 
-            // Populate Months
             monthNames.forEach((name, i) => {
                 const opt = document.createElement('option');
                 opt.value = i;
@@ -1034,13 +1216,35 @@
                 selectMonth.appendChild(opt);
             });
             
-            // Add listeners for dynamic update
-            selectMonth.onchange = renderManualCalendar;
-            selectYear.onchange = renderManualCalendar;
+            selectMonth.onchange = updateManualWeeksState;
+            selectYear.onchange = updateManualWeeksState;
 
             document.getElementById('manualAmount').value = '';
-            renderManualCalendar(); 
+            
+            updateManualWeeksState(); 
             document.getElementById('manualModal').classList.add('open');
+        }
+
+        // MEJORA: Pre-llenado inteligente y chequeo visual
+        function updateManualWeeksState() {
+            renderManualCalendar(); 
+            
+            const month = parseInt(document.getElementById('manualMonth').value);
+            const year = parseInt(document.getElementById('manualYear').value);
+            
+            document.querySelectorAll('.manual-week-btn').forEach(btn => {
+                const wk = parseInt(btn.dataset.wk);
+                const hasData = getExistingEntryIndex(year, month, wk) !== -1;
+                
+                if (hasData) {
+                    btn.classList.add('filled');
+                } else {
+                    btn.classList.remove('filled');
+                }
+            });
+            
+            const currentSelected = parseInt(document.getElementById('manualWeekSelect').value) || 1;
+            selectManualWeekFromButton(currentSelected); 
         }
 
         function renderManualCalendar() {
@@ -1051,47 +1255,93 @@
             const year = parseInt(document.getElementById('manualYear').value);
             
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-            const firstDayIndex = new Date(year, month, 1).getDay(); // 0 Sun, 1 Mon...
-            // Adjust to start Monday (0=Mon, 6=Sun)
+            const firstDayIndex = new Date(year, month, 1).getDay(); 
             const startOffset = (firstDayIndex === 0 ? 6 : firstDayIndex - 1);
 
-            // Empty slots for start
             for(let i=0; i<startOffset; i++) {
                 const empty = document.createElement('div');
                 container.appendChild(empty);
             }
 
-            // Get month color for highlight
             const highlightColor = monthColors[month];
 
-            // Render Days
             for(let d=1; d<=daysInMonth; d++) {
                 const dayEl = document.createElement('div');
                 dayEl.className = 'calendar-day';
                 dayEl.textContent = d;
                 
-                // Determine Week (1-4)
                 let weekNum = 0;
                 if(d <= 7) weekNum = 1;
                 else if(d <= 14) weekNum = 2;
                 else if(d <= 21) weekNum = 3;
-                else weekNum = 4;
+                else weekNum = 4; // Max 4 weeks visualization
 
                 dayEl.dataset.week = weekNum;
                 
-                dayEl.onclick = () => selectManualWeekFromCalendar(weekNum, highlightColor);
+                if (getExistingEntryIndex(year, month, weekNum) !== -1) {
+                    dayEl.classList.add('has-data');
+                }
+                
+                dayEl.onclick = () => selectManualWeekFromButton(weekNum);
                 
                 container.appendChild(dayEl);
             }
-            
-            // Auto select week 1 initially
-            selectManualWeekFromCalendar(1, highlightColor);
         }
 
-        function selectManualWeekFromCalendar(wk, color) {
+        function getExistingEntryIndex(year, month, week) {
+            return historyData.findIndex(item => {
+                const d = new Date(item.date);
+                // Comparar Año y Mes
+                if (d.getFullYear() !== year || d.getMonth() !== month) return false;
+                
+                const day = d.getDate();
+                let itemWeek = 0;
+                if (day <= 7) itemWeek = 1;
+                else if (day <= 14) itemWeek = 2;
+                else if (day <= 21) itemWeek = 3;
+                else itemWeek = 4; // Clamp a 4
+                
+                return itemWeek === week;
+            });
+        }
+
+        function selectManualWeekFromButton(wk) {
+            const month = parseInt(document.getElementById('manualMonth').value);
+            const year = parseInt(document.getElementById('manualYear').value);
+            const color = monthColors[month];
+            
             document.getElementById('manualWeekSelect').value = wk;
             document.getElementById('selectedWeekDisplay').innerHTML = `SEMANA ${wk} <span style="color:${color}">●</span>`;
             document.getElementById('selectedWeekDisplay').style.color = color;
+
+            document.querySelectorAll('.manual-week-btn').forEach(btn => {
+                const btnWk = parseInt(btn.dataset.wk);
+                if(btnWk === wk) {
+                    btn.classList.add('bg-indigo-500', 'text-white');
+                    btn.classList.remove('hover:bg-white/20');
+                } else {
+                    btn.classList.remove('bg-indigo-500', 'text-white');
+                    btn.classList.add('hover:bg-white/20');
+                }
+            });
+
+            // MEJORA: Rellenar Input si existe
+            const existingIdx = getExistingEntryIndex(year, month, wk);
+            const inputAmount = document.getElementById('manualAmount');
+            const saveBtn = document.getElementById('btnSaveManual');
+            
+            if (existingIdx !== -1) {
+                // Mostrar la GANANCIA del usuario, no el total bruto
+                inputAmount.value = historyData[existingIdx].netUser;
+                saveBtn.textContent = "Actualizar Registro";
+                saveBtn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+                saveBtn.classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
+            } else {
+                inputAmount.value = '';
+                saveBtn.textContent = "Guardar Nuevo Registro";
+                saveBtn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                saveBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-500');
+            }
 
             const days = document.querySelectorAll('.calendar-day');
             days.forEach(day => {
@@ -1099,11 +1349,16 @@
                 if(dayWk === wk) {
                     day.classList.add('selected');
                     day.style.backgroundColor = color;
-                    day.style.color = '#1f2937'; // Dark text on bright color
+                    day.style.color = '#1f2937'; 
                 } else {
                     day.classList.remove('selected');
-                    day.style.backgroundColor = 'transparent';
-                    day.style.color = 'rgba(255,255,255,0.7)';
+                    if(day.classList.contains('has-data')) {
+                        day.style.backgroundColor = 'rgba(0, 0, 0, 0.6)';
+                        day.style.color = '#86efac';
+                    } else {
+                        day.style.backgroundColor = 'transparent';
+                        day.style.color = 'rgba(255,255,255,0.7)';
+                    }
                 }
             });
         }
@@ -1116,87 +1371,129 @@
             const month = parseInt(document.getElementById('manualMonth').value);
             const year = parseInt(document.getElementById('manualYear').value);
             const week = parseInt(document.getElementById('manualWeekSelect').value);
-            const amount = parseFloat(document.getElementById('manualAmount').value);
             
-            if(!amount || amount <= 0) {
-                alert("Ingresá un monto válido.");
+            // Dato ingresado es la GANANCIA DEL USUARIO
+            const userProfit = parseFloat(document.getElementById('manualAmount').value);
+            
+            if(!userProfit || userProfit <= 0) {
+                showDialog("Atención", "Ingresá un monto válido.");
                 return;
             }
 
-            // Construir fecha
-            // Sem 1 -> Dia 1, Sem 2 -> Dia 8, Sem 3 -> Dia 15, Sem 4 -> Dia 22
-            const day = 1 + (week - 1) * 7;
-            const dateObj = new Date(year, month, day, 12, 0, 0); 
+            // Calcular TOTAL BRUTO inverso
+            // Si userProfit = 55%, entonces Total = userProfit / 0.55
+            const totalBruto = userProfit / tuPorcentaje;
 
-            const entry = {
-                date: dateObj.toISOString(),
-                totalBruto: amount,
-                netUser: amount * tuPorcentaje,
-                company: amount * comisionPorcentaje
+            const existingIndex = getExistingEntryIndex(year, month, week);
+            
+            // Función interna para proceder con el guardado
+            const performSave = () => {
+                if (existingIndex !== -1) {
+                   historyData.splice(existingIndex, 1);
+                }
+
+                // Construir fecha
+                const day = 1 + (week - 1) * 7;
+                const dateObj = new Date(year, month, day, 12, 0, 0); 
+
+                const entry = {
+                    date: dateObj.toISOString(),
+                    totalBruto: totalBruto,
+                    netUser: userProfit,
+                    company: totalBruto * comisionPorcentaje
+                };
+                
+                historyData.push(entry);
+                localStorage.setItem('barber_history', JSON.stringify(historyData));
+                
+                renderHistorySection();
+                closeManualModal();
+                showDialog("Éxito", "Registro guardado exitosamente.", null, null, "Ok");
             };
-            
-            historyData.push(entry);
-            localStorage.setItem('barber_history', JSON.stringify(historyData));
-            
-            renderHistorySection();
-            closeManualModal();
-            alert("Registro histórico guardado.");
+
+            if (existingIndex !== -1) {
+                const existingAmount = formatCurrency(historyData[existingIndex].netUser);
+                showDialog("Confirmar Sobrescritura", 
+                    `Ya existe un registro para la Semana ${week} con una ganancia de ${existingAmount}.\n\n¿Deseas SOBRESCRIBIRLO con el nuevo valor de $${userProfit}?`, 
+                    performSave, null, "Sí, sobrescribir");
+            } else {
+                performSave();
+            }
         }
 
         // CALCULADORA FUNCIONES
         function openCalculator(targetId) {
             currentCalcInputId = targetId;
-            calcCounts = {}; calcDenominations.forEach(d => calcCounts[d] = 0);
-            renderCalcGrid(); updateCalcTotal();
+            calcExpression = '';
+            calcResult = 0;
+            updateCalcDisplay();
             document.getElementById('calculatorModal').classList.add('open');
         }
-        function closeCalculator() { document.getElementById('calculatorModal').classList.remove('open'); }
-        function applyCalculatorTotal() {
-            if(currentCalcInputId) {
-                const total = calcDenominations.reduce((acc, val) => acc + (val * (calcCounts[val] || 0)), 0);
+
+        function closeCalculator() {
+            document.getElementById('calculatorModal').classList.remove('open');
+            currentCalcInputId = null;
+        }
+
+        function calcInput(val) {
+            const display = document.getElementById('calcDisplay');
+            
+            if (val === 'C') {
+                calcExpression = '';
+                calcResult = 0;
+            } else if (val === 'DEL') {
+                calcExpression = calcExpression.toString().slice(0, -1);
+            } else if (val === '=') {
+                try {
+                    // Safe eval logic
+                    const result = eval(calcExpression.replace(/[^-()\d/*+.]/g, ''));
+                    calcResult = result || 0;
+                    calcExpression = String(calcResult);
+                } catch {
+                    calcExpression = 'Error';
+                    calcResult = 0;
+                }
+            } else {
+                // Prevent multiple operators or dots if logic requires, but simple append works for now
+                calcExpression += val;
+                
+                // Real-time provisional calc
+                try {
+                    const tempExp = calcExpression.replace(/[^-()\d/*+.]/g, '');
+                    // Only eval if it doesn't end in operator
+                    if (!['+', '-', '*', '/'].includes(tempExp.slice(-1))) {
+                         calcResult = eval(tempExp) || 0;
+                    }
+                } catch {}
+            }
+            updateCalcDisplay();
+        }
+
+        function updateCalcDisplay() {
+            document.getElementById('calcExpression').textContent = calcExpression;
+            document.getElementById('calcDisplay').textContent = formatCurrency(calcResult);
+            // Mostrar ganancia (55%)
+            document.getElementById('calcProfitDisplay').textContent = formatCurrency(calcResult * tuPorcentaje);
+        }
+
+        function applyCalculatorResult() {
+            if(currentCalcInputId && calcResult > 0) {
+                let valueToApply = calcResult;
+                
+                // Lógica de "Aplicar":
+                // Si estoy en Carga Manual (manualAmount), pego la GANANCIA (55%).
+                // Si estoy en Seguimiento Diario (dia_...), pego el TOTAL BRUTO (100%).
+                if(currentCalcInputId === 'manualAmount') {
+                    valueToApply = calcResult * tuPorcentaje;
+                }
+                
                 const input = document.getElementById(currentCalcInputId);
-                if(input) { input.value = total; input.dispatchEvent(new Event('input')); }
+                if(input) {
+                    input.value = parseFloat(valueToApply.toFixed(2)); // Round to avoid crazy decimals
+                    input.dispatchEvent(new Event('input'));
+                }
             }
             closeCalculator();
-        }
-        function updateCalcTotal() {
-            const total = calcDenominations.reduce((acc, val) => acc + (val * (calcCounts[val] || 0)), 0);
-            document.getElementById('calcTotalDisplay').textContent = formatCurrency(total);
-        }
-        function toggleAddDenom() { document.getElementById('addDenomContainer').classList.toggle('hidden'); }
-        function calcAddNew() {
-            const val = parseInt(document.getElementById('newDenomInput').value);
-            if(val > 0 && !calcDenominations.includes(val)) {
-                calcDenominations.push(val); calcDenominations.sort((a,b)=>b-a);
-                localStorage.setItem('calc-denoms', JSON.stringify(calcDenominations));
-                calcCounts[val]=0; renderCalcGrid(); toggleAddDenom();
-            }
-        }
-        function calcReset() {
-            if(confirm('¿Borrar conteo?')) { calcDenominations.forEach(d => calcCounts[d]=0); renderCalcGrid(); updateCalcTotal(); }
-        }
-        function calcChange(val, delta) {
-            const next = (calcCounts[val] || 0) + delta;
-            if(next >= 0) { calcCounts[val] = next; renderCalcGrid(); updateCalcTotal(); } // Simple re-render for speed dev
-        }
-        function renderCalcGrid() {
-            const grid = document.getElementById('calcGrid'); grid.innerHTML = '';
-            calcDenominations.forEach(val => {
-                const count = calcCounts[val] || 0;
-                const card = document.createElement('div');
-                card.className = "calc-card relative h-24 bg-white/5 backdrop-blur-md rounded-xl border border-white/10 shadow-lg overflow-hidden select-none active:scale-[0.98]";
-                card.innerHTML = `
-                    <div class="absolute inset-0 flex h-full w-full z-10">
-                        <button onclick="calcChange(${val}, -1)" class="w-1/2 h-full flex items-center justify-start pl-3 active:bg-rose-500/10 transition-colors outline-none"><div class="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-1 rounded-full opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 12h14"/></svg></div></button>
-                        <button onclick="calcChange(${val}, 1)" class="w-1/2 h-full flex items-center justify-end pr-3 active:bg-emerald-500/10 transition-colors outline-none"><div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-1 rounded-full opacity-40"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 5v14M5 12h14"/></svg></div></button>
-                    </div>
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
-                        <span class="text-xl font-bold text-white tracking-wide drop-shadow-md">${val.toLocaleString()}</span>
-                        <div class="count-badge px-2 py-0.5 rounded-full text-xs font-bold transition-all border ${count > 0 ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50' : 'bg-white/5 text-white/30 border-white/5'}">${count}</div>
-                        <span class="text-[10px] text-cyan-200/70 font-medium mt-1 tracking-wider min-h-[15px]">${count > 0 ? formatCurrency(val * count) : ''}</span>
-                    </div>`;
-                grid.appendChild(card);
-            });
         }
 
         // INICIALIZACIÓN
@@ -1204,4 +1501,5 @@
     </script>
 </body>
 </html>
+
 
