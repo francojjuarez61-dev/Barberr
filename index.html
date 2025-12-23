@@ -16,7 +16,8 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        body.no-scroll { overflow: hidden; height: 100vh; position: fixed; width: 100%; }
+        /* Modificado para soportar el fix de scroll */
+        body.no-scroll { overflow: hidden; position: fixed; width: 100%; height: 100vh; }
 
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
@@ -559,7 +560,7 @@
             </div>
 
             <!-- Scroll interno para pantallas muy pequeñas -->
-            <div class="overflow-y-auto custom-scroll pr-1 -mr-1 flex-1 space-y-3">
+            <div class="overflow-y-auto custom-scroll pr-1 -mr-1 flex-1 space-y-3" style="overscroll-behavior: contain;">
                 <!-- Fila 1: Fecha y Selectores -->
                 <div class="bg-black/10 rounded-xl p-3 border border-white/5">
                     <div class="flex gap-2">
@@ -627,6 +628,7 @@
         let selectedWeekIndex = -1;
         let isChartExpanded = false;
         let currentCalcInputId = null;
+        let savedScrollPosition = 0;
 
         // --- CASH COUNTER LOGIC (Replaces React App - For Section 2) ---
         const CashCounter = {
@@ -862,7 +864,8 @@
                 }
                 const input = document.getElementById(currentCalcInputId);
                 if(input) {
-                    input.value = parseFloat(valueToApply.toFixed(2));
+                    // FIX: Redondear al entero más cercano para evitar decimales como 5.98
+                    input.value = Math.round(valueToApply);
                     input.dispatchEvent(new Event('input'));
                 }
             }
@@ -871,10 +874,17 @@
 
         // --- FUNCIONES DE CONTROL DE SCROLL ---
         function toggleBodyLock(isLocked) {
+            const body = document.body;
             if (isLocked) {
-                document.body.classList.add('no-scroll');
+                // Guardar la posición actual antes de fijar el body
+                savedScrollPosition = window.scrollY;
+                body.style.top = `-${savedScrollPosition}px`;
+                body.classList.add('no-scroll');
             } else {
-                document.body.classList.remove('no-scroll');
+                // Restaurar
+                body.classList.remove('no-scroll');
+                body.style.removeProperty('top');
+                window.scrollTo(0, savedScrollPosition);
             }
         }
 
