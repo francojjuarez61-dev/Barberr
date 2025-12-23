@@ -2,7 +2,7 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BarberApp - Gestión Total</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -12,12 +12,11 @@
             background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
             background-size: 400% 400%;
             animation: gradientBG 15s ease infinite;
-            /* Previene el efecto elástico en iOS y mejora el scroll */
             overscroll-behavior-y: none;
+            -webkit-tap-highlight-color: transparent;
         }
         
-        /* CLASE PARA BLOQUEAR SCROLL DE FONDO */
-        body.no-scroll { overflow: hidden; touch-action: none; }
+        body.no-scroll { overflow: hidden; height: 100vh; position: fixed; width: 100%; }
 
         @keyframes gradientBG {
             0% { background-position: 0% 50%; }
@@ -84,9 +83,9 @@
         }
         .modal-overlay.open { opacity: 1; pointer-events: auto; }
         
-        /* Z-INDEX PARA CALCULADORA ENCIMA DE TODO */
-        #calculatorModal { z-index: 100; }
         #dialogModal { z-index: 200; }
+        #cashCounterModal { z-index: 100; }
+        #calculatorModal { z-index: 150; }
 
         .chart-point:hover { cursor: pointer; transform: scale(1.5); transform-origin: center; transition: transform 0.2s; }
 
@@ -101,12 +100,10 @@
         .calendar-day.has-data { background: rgba(0, 0, 0, 0.6); color: #86efac; border: 1px solid rgba(255,255,255,0.1); }
         .week-indicator { font-size: 0.6rem; text-transform: uppercase; color: rgba(255,255,255,0.3); text-align: center; margin-bottom: 2px; }
         
-        /* Scrollbar personalizado para lista de semanas */
         .custom-scroll::-webkit-scrollbar { width: 4px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-        /* Estilos EXPANDED CHART (Zoom) */
         .chart-zoom-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(15px);
@@ -128,7 +125,30 @@
         
         #chartContainer { cursor: zoom-in; }
 
-        /* --- Estilos Calculadora Moderna Glass iOS --- */
+        /* --- ESTILOS CALCULADORA NEON (Para Sección 2) --- */
+        .neon-bg {
+            background-color: #0f172a;
+            background-image: radial-gradient(ellipse at top, #1e293b, #0a0a0a, #000000);
+        }
+        .neon-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.1s;
+        }
+        .neon-card:active { transform: scale(0.98); background: rgba(255, 255, 255, 0.08); }
+        
+        .neon-text-gradient {
+            background: linear-gradient(to right, #22d3ee, #60a5fa, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 10px rgba(56,189,248,0.5));
+        }
+
+        .animate-zoom-in { animation: zoomIn 0.2s ease-out forwards; }
+        @keyframes zoomIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        /* --- Estilos Calculadora Moderna Glass iOS (Para Sección 3) --- */
         .calc-btn {
             appearance: none; outline: none; border: none;
             background: rgba(255, 255, 255, 0.15); /* Base glass */
@@ -394,7 +414,91 @@
         </div>
     </div>
 
-    <!-- MODAL CALCULADORA GLASS iOS -->
+    <!-- MODAL CALCULADORA CASH COUNTER (NEON) - PARA SECCIÓN 2 -->
+    <div id="cashCounterModal" class="modal-overlay">
+        <div class="neon-bg w-full h-full md:h-auto md:max-h-[90vh] md:max-w-md md:rounded-[32px] overflow-hidden shadow-2xl flex flex-col relative text-white select-none">
+            
+            <!-- Header -->
+            <header class="sticky top-0 z-40 bg-black/30 backdrop-blur-xl border-b border-white/10 shadow-[0_4px_30px_rgba(0,0,0,0.5)] px-4 py-3">
+                <div class="flex justify-between items-center mb-1">
+                    <div class="flex items-center gap-2 text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.8)]">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"/><path d="M18.09 10.37A6 6 0 1 1 10.34 18"/><path d="M7 6h1v4"/><path d="m16.71 13.88.7 .71-2.82 2.82"/></svg>
+                        <span class="text-xs font-bold tracking-widest uppercase">Total Acumulado</span>
+                    </div>
+                    
+                    <div class="flex gap-2">
+                        <button onclick="CashCounter.toggleAddModal()" class="p-1.5 bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-500/50 text-emerald-400 rounded-full transition-all active:scale-95 shadow-[0_0_10px_rgba(16,185,129,0.2)]">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                        </button>
+                        <button onclick="CashCounter.toggleResetModal()" class="p-1.5 bg-rose-500/20 hover:bg-rose-500/40 border border-rose-500/50 text-rose-400 rounded-full transition-all active:scale-95 shadow-[0_0_10px_rgba(244,63,94,0.2)]">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                        </button>
+                        <button onclick="CashCounter.close()" class="p-1.5 bg-white/5 hover:bg-white/20 border border-white/20 text-white rounded-full transition-all active:scale-95">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="text-4xl font-black tracking-tight text-center neon-text-gradient mb-1" id="cashTotalDisplay">
+                    $0
+                </div>
+                <button onclick="CashCounter.applyToInput()" class="w-full bg-white text-black font-bold text-sm py-2 rounded-lg shadow-lg active:scale-95 transition-transform hover:bg-gray-100 flex items-center justify-center gap-2">
+                    Aplicar Total
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="text-black"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                </button>
+            </header>
+
+            <!-- Main Area -->
+            <main class="flex-1 p-3 overflow-y-auto custom-scroll" id="cashGridContainer">
+                <!-- Grid will be injected here -->
+            </main>
+
+            <!-- Footer -->
+            <footer class="bg-black/40 backdrop-blur-md border-t border-white/10 p-2 text-center text-[10px] text-white/30 uppercase tracking-widest sticky bottom-0 z-30">
+                Calculadora de Servicios
+            </footer>
+
+            <!-- Modals Overlay (Nested) -->
+            <div id="cashModalsOverlay" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden animate-zoom-in">
+                <!-- Reset Modal -->
+                <div id="cashResetModal" class="hidden w-full max-w-sm bg-[#1a1b26] border border-white/10 rounded-2xl p-6 text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                    <div class="w-12 h-12 bg-rose-500/10 border border-rose-500/20 rounded-full flex items-center justify-center mb-4 mx-auto text-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.2)]">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">¿Reiniciar Todo?</h3>
+                    <p class="text-sm text-white/50 mb-6">El contador volverá a cero.</p>
+                    <div class="flex gap-3">
+                        <button onclick="CashCounter.hideModals()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10">Cancelar</button>
+                        <button onclick="CashCounter.confirmReset()" class="flex-1 py-3 bg-rose-600/80 hover:bg-rose-500 rounded-xl font-bold shadow-[0_0_20px_rgba(225,29,72,0.4)]">Sí, borrar</button>
+                    </div>
+                </div>
+
+                <!-- Add Modal -->
+                <div id="cashAddModal" class="hidden w-full max-w-sm bg-[#1a1b26] border border-white/10 rounded-2xl p-6 text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                    <div class="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center mb-4 mx-auto text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.2)]">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-white mb-2">Nuevo Botón</h3>
+                    <input type="number" id="newDenomInput" placeholder="Ej: 50000" class="w-full text-center text-2xl font-bold p-3 bg-black/30 border border-white/10 rounded-xl text-emerald-400 outline-none mb-6 placeholder-white/10">
+                    <div class="flex gap-3">
+                        <button onclick="CashCounter.hideModals()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10">Cancelar</button>
+                        <button onclick="CashCounter.addDenomination()" class="flex-1 py-3 bg-emerald-600/80 hover:bg-emerald-500 rounded-xl font-bold shadow-[0_0_20px_rgba(5,150,105,0.4)]">Agregar</button>
+                    </div>
+                </div>
+
+                <!-- Delete Modal -->
+                <div id="cashDeleteModal" class="hidden w-full max-w-sm bg-[#1a1b26] border border-white/10 rounded-2xl p-6 text-center shadow-[0_0_50px_rgba(0,0,0,0.5)]">
+                    <h3 class="text-lg font-bold text-white mb-2">¿Eliminar botón?</h3>
+                    <p class="text-sm text-white/50 mb-6">Vas a quitar el botón de <strong class="text-rose-400" id="deleteDenomValue"></strong>.</p>
+                    <div class="flex gap-3">
+                        <button onclick="CashCounter.hideModals()" class="flex-1 py-3 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10">Cancelar</button>
+                        <button onclick="CashCounter.confirmDelete()" class="flex-1 py-3 bg-white/10 hover:bg-rose-900/50 text-rose-400 border border-rose-500/30 rounded-xl font-bold">Eliminar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL CALCULADORA GLASS iOS - PARA SECCIÓN 3 (MANUAL) -->
     <div id="calculatorModal" class="modal-overlay">
         <div class="glass-panel w-full max-w-sm rounded-[40px] overflow-hidden shadow-2xl backdrop-blur-xl border border-white/20">
             <div class="p-6 pb-2">
@@ -402,7 +506,7 @@
                     <div id="calcExpression" class="text-white/50 text-sm h-6 font-mono tracking-wide"></div>
                     <div id="calcDisplay" class="text-5xl font-light text-white font-sans tracking-tight leading-none">0</div>
                     <div class="flex justify-end items-center gap-2 mt-2">
-                        <span class="text-[10px] text-green-400 font-bold uppercase tracking-wider bg-green-500/10 px-2 py-1 rounded">Tu Ganancia:</span>
+                        <span class="text-[10px] text-green-400 font-bold uppercase tracking-wider bg-green-500/10 px-2 py-1 rounded">Tu Ganancia (55%):</span>
                         <span id="calcProfitDisplay" class="text-sm font-bold text-green-400">$0</span>
                     </div>
                 </div>
@@ -430,7 +534,7 @@
             </div>
             <div class="px-5 pb-6 flex justify-between gap-3">
                 <button onclick="closeCalculator()" class="flex-1 py-3.5 rounded-2xl font-bold text-white/70 hover:bg-white/10 transition-colors text-sm">Cancelar</button>
-                <button onclick="applyCalculatorResult()" class="flex-1 py-3.5 rounded-2xl font-bold bg-white text-black hover:bg-gray-100 shadow-lg active:scale-95 transition-transform text-sm">Aplicar Valor</button>
+                <button onclick="applyCalculatorResult()" class="flex-1 py-3.5 rounded-2xl font-bold bg-white text-black hover:bg-gray-100 shadow-lg active:scale-95 transition-transform text-sm">Aplicar</button>
             </div>
         </div>
     </div>
@@ -485,6 +589,7 @@
                 <div>
                     <label class="block text-xs font-bold text-emerald-400 mb-1 ml-1 uppercase">Tu Ganancia ($)</label>
                     <div class="flex items-center gap-2">
+                        <!-- BOTÓN ABRE CALCULADORA IOS -->
                         <button onclick="openCalculator('manualAmount')" class="control-btn w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold bg-indigo-500/20 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/40 transition-all flex-shrink-0">
                              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>
                         </button>
@@ -520,13 +625,251 @@
 
         let currentManualWeeks = [];
         let selectedWeekIndex = -1;
+        let isChartExpanded = false;
+        let currentCalcInputId = null;
 
+        // --- CASH COUNTER LOGIC (Replaces React App - For Section 2) ---
+        const CashCounter = {
+            denominations: [60000, 50000, 30000, 20000, 15000, 14000, 12000, 8000, 6000],
+            counts: {},
+            currentDeleteVal: null,
+            targetInputId: null,
+
+            init() {
+                const savedDenoms = localStorage.getItem('calc-denoms');
+                if (savedDenoms) this.denominations = JSON.parse(savedDenoms);
+                const savedCounts = localStorage.getItem('calc-counts');
+                if (savedCounts) this.counts = JSON.parse(savedCounts);
+            },
+
+            save() {
+                localStorage.setItem('calc-denoms', JSON.stringify(this.denominations));
+                localStorage.setItem('calc-counts', JSON.stringify(this.counts));
+            },
+
+            triggerHaptic() { if (navigator.vibrate) navigator.vibrate(10); },
+            format(num) { return new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 }).format(num); },
+
+            render() {
+                const container = document.getElementById('cashGridContainer');
+                container.innerHTML = '';
+                const total = this.denominations.reduce((acc, val) => acc + (val * (this.counts[val] || 0)), 0);
+                document.getElementById('cashTotalDisplay').textContent = this.format(total);
+
+                const grid = document.createElement('div');
+                grid.className = 'grid grid-cols-2 gap-3 max-w-3xl mx-auto pb-4';
+
+                this.denominations.forEach(val => {
+                    const count = this.counts[val] || 0;
+                    const subtotal = val * count;
+                    const isActive = count > 0;
+                    const card = document.createElement('div');
+                    card.className = `relative h-24 neon-card rounded-xl overflow-hidden group select-none`;
+                    card.innerHTML = `
+                        <button onclick="CashCounter.askDelete(event, ${val})" class="absolute top-1 right-1 z-30 p-1 text-white/20 hover:text-rose-400 hover:bg-rose-500/10 rounded-full opacity-0 group-hover:opacity-100 transition-all">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                        </button>
+                        <div class="absolute inset-0 flex h-full w-full z-10">
+                            <button onclick="CashCounter.update(${val}, -1)" class="w-1/2 h-full flex items-center justify-start pl-3 group/minus active:bg-rose-500/10 outline-none touch-manipulation">
+                                <div class="bg-rose-500/10 border border-rose-500/30 text-rose-400 p-1.5 rounded-full opacity-40 group-active/minus:opacity-100 transition-all shadow-[0_0_10px_rgba(244,63,94,0.0)] group-active/minus:shadow-[0_0_10px_rgba(244,63,94,0.4)]">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </div>
+                            </button>
+                            <button onclick="CashCounter.update(${val}, 1)" class="w-1/2 h-full flex items-center justify-end pr-3 group/plus active:bg-emerald-500/10 outline-none touch-manipulation">
+                                <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-1.5 rounded-full opacity-40 group-active/plus:opacity-100 transition-all shadow-[0_0_10px_rgba(16,185,129,0.0)] group-active/plus:shadow-[0_0_10px_rgba(16,185,129,0.4)]">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                                </div>
+                            </button>
+                        </div>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0">
+                            <span class="text-2xl font-bold text-white tracking-wide drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)]">${val.toLocaleString('es-AR')}</span>
+                            <div class="mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold transition-all border-b border-t border-transparent ${isActive ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/50 shadow-[0_0_10px_rgba(34,211,238,0.2)]' : 'bg-white/5 text-white/30 border-white/5'}">
+                                ${count}
+                            </div>
+                            <span class="text-[10px] text-cyan-200/70 font-medium mt-1 tracking-wider h-4">${isActive ? this.format(subtotal) : ''}</span>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+
+                const addBtn = document.createElement('button');
+                addBtn.onclick = () => this.toggleAddModal();
+                addBtn.className = "h-24 rounded-xl border border-dashed border-white/20 bg-white/5 flex flex-col items-center justify-center text-white/40 hover:text-emerald-400 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all group";
+                addBtn.innerHTML = `
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="mb-1 opacity-50 group-hover:opacity-100 group-hover:drop-shadow-[0_0_8px_rgba(16,185,129,0.6)] transition-all"><circle cx="12" cy="12" r="10"/><path d="M8 12h8"/><path d="M12 8v8"/></svg>
+                    <span class="text-xs font-medium tracking-wide">NUEVO</span>
+                `;
+                grid.appendChild(addBtn);
+                container.appendChild(grid);
+            },
+
+            update(val, delta) {
+                const current = this.counts[val] || 0;
+                if (current + delta < 0) return;
+                this.counts[val] = current + delta;
+                this.triggerHaptic();
+                this.save();
+                this.render();
+            },
+
+            open(inputId) {
+                this.targetInputId = inputId;
+                this.render();
+                toggleBodyLock(true);
+                document.getElementById('cashCounterModal').classList.add('open');
+            },
+
+            close() {
+                toggleBodyLock(false);
+                document.getElementById('cashCounterModal').classList.remove('open');
+            },
+            
+            applyToInput() {
+                if(this.targetInputId) {
+                    let total = this.denominations.reduce((acc, val) => acc + (val * (this.counts[val] || 0)), 0);
+                    const input = document.getElementById(this.targetInputId);
+                    if(input) {
+                        input.value = Math.round(total);
+                        input.dispatchEvent(new Event('input'));
+                    }
+                }
+                this.close();
+            },
+
+            hideModals() {
+                document.getElementById('cashModalsOverlay').classList.add('hidden');
+                document.getElementById('cashResetModal').classList.add('hidden');
+                document.getElementById('cashAddModal').classList.add('hidden');
+                document.getElementById('cashDeleteModal').classList.add('hidden');
+            },
+
+            toggleResetModal() {
+                this.hideModals();
+                document.getElementById('cashModalsOverlay').classList.remove('hidden');
+                document.getElementById('cashResetModal').classList.remove('hidden');
+            },
+
+            confirmReset() {
+                this.counts = {};
+                this.denominations.forEach(d => this.counts[d] = 0);
+                this.save();
+                this.render();
+                this.hideModals();
+                this.triggerHaptic();
+            },
+
+            toggleAddModal() {
+                this.hideModals();
+                document.getElementById('newDenomInput').value = '';
+                document.getElementById('cashModalsOverlay').classList.remove('hidden');
+                document.getElementById('cashAddModal').classList.remove('hidden');
+                setTimeout(() => document.getElementById('newDenomInput').focus(), 100);
+            },
+
+            addDenomination() {
+                const val = parseInt(document.getElementById('newDenomInput').value);
+                if (val > 0 && !this.denominations.includes(val)) {
+                    this.denominations.push(val);
+                    this.denominations.sort((a,b) => b-a);
+                    this.counts[val] = 0;
+                    this.save();
+                    this.render();
+                    this.triggerHaptic();
+                }
+                this.hideModals();
+            },
+
+            askDelete(e, val) {
+                e.stopPropagation();
+                this.currentDeleteVal = val;
+                this.hideModals();
+                document.getElementById('deleteDenomValue').textContent = '$' + val.toLocaleString();
+                document.getElementById('cashModalsOverlay').classList.remove('hidden');
+                document.getElementById('cashDeleteModal').classList.remove('hidden');
+                this.triggerHaptic();
+            },
+
+            confirmDelete() {
+                if (this.currentDeleteVal) {
+                    this.denominations = this.denominations.filter(d => d !== this.currentDeleteVal);
+                    delete this.counts[this.currentDeleteVal];
+                    this.save();
+                    this.render();
+                    this.triggerHaptic();
+                }
+                this.hideModals();
+            }
+        };
+
+        // --- CALCULADORA iOS (Para Sección 3) ---
         let calcExpression = '';
         let calcResult = 0;
-        let currentCalcInputId = null;
-        let isChartExpanded = false;
 
-        // --- FUNCIONES DE CONTROL DE SCROLL (NO-SCROLL BODY) ---
+        function openCalculator(targetId) {
+            currentCalcInputId = targetId;
+            calcExpression = '';
+            calcResult = 0;
+            updateCalcDisplay();
+            toggleBodyLock(true);
+            document.getElementById('calculatorModal').classList.add('open');
+        }
+
+        function closeCalculator() {
+            document.getElementById('calculatorModal').classList.remove('open');
+            toggleBodyLock(false);
+        }
+
+        function calcInput(val) {
+            if (val === 'C') {
+                calcExpression = '';
+                calcResult = 0;
+            } else if (val === 'DEL') {
+                calcExpression = calcExpression.toString().slice(0, -1);
+            } else if (val === '=') {
+                try {
+                    const result = eval(calcExpression.replace(/[^-()\d/*+.]/g, ''));
+                    calcResult = result || 0;
+                    calcExpression = String(calcResult);
+                } catch {
+                    calcExpression = 'Error';
+                    calcResult = 0;
+                }
+            } else {
+                calcExpression += val;
+                try {
+                    const tempExp = calcExpression.replace(/[^-()\d/*+.]/g, '');
+                    if (!['+', '-', '*', '/'].includes(tempExp.slice(-1))) {
+                         calcResult = eval(tempExp) || 0;
+                    }
+                } catch {}
+            }
+            updateCalcDisplay();
+        }
+
+        function updateCalcDisplay() {
+            document.getElementById('calcExpression').textContent = calcExpression;
+            document.getElementById('calcDisplay').textContent = formatCurrency(calcResult);
+            // Mostrar siempre el 55% proyectado para que el usuario sepa qué se aplicará
+            document.getElementById('calcProfitDisplay').textContent = formatCurrency(calcResult * tuPorcentaje);
+        }
+
+        function applyCalculatorResult() {
+            if(currentCalcInputId && calcResult > 0) {
+                let valueToApply = calcResult;
+                // SI es carga manual, aplicamos el 55%
+                if(currentCalcInputId === 'manualAmount') {
+                    valueToApply = calcResult * tuPorcentaje;
+                }
+                const input = document.getElementById(currentCalcInputId);
+                if(input) {
+                    input.value = parseFloat(valueToApply.toFixed(2));
+                    input.dispatchEvent(new Event('input'));
+                }
+            }
+            closeCalculator();
+        }
+
+        // --- FUNCIONES DE CONTROL DE SCROLL ---
         function toggleBodyLock(isLocked) {
             if (isLocked) {
                 document.body.classList.add('no-scroll');
@@ -605,7 +948,7 @@
                 btnCancel.onclick = () => {
                     modal.classList.remove('open');
                     setTimeout(() => { content.classList.remove('scale-100'); content.classList.add('scale-95'); }, 200);
-                    toggleBodyLock(false); // Unlock scroll
+                    toggleBodyLock(false); 
                     if (onCancel) onCancel();
                 };
                 actionsEl.appendChild(btnCancel);
@@ -618,13 +961,13 @@
                 btnConfirm.onclick = () => {
                     modal.classList.remove('open');
                     setTimeout(() => { content.classList.remove('scale-100'); content.classList.add('scale-95'); }, 200);
-                    toggleBodyLock(false); // Unlock scroll
+                    toggleBodyLock(false); 
                     onConfirm();
                 };
                 actionsEl.appendChild(btnConfirm);
             }
             
-            toggleBodyLock(true); // Lock scroll
+            toggleBodyLock(true); 
             modal.classList.add('open');
             setTimeout(() => { content.classList.remove('scale-95'); content.classList.add('scale-100'); }, 10);
         }
@@ -639,6 +982,8 @@
         }
 
         function loadAllData() {
+            CashCounter.init(); // Init Cash Counter
+            
             const savedHistory = localStorage.getItem('barber_history');
             if (savedHistory) historyData = JSON.parse(savedHistory);
             
@@ -735,8 +1080,6 @@
             const threshold = 50; 
             const diffX = endX - startX;
             const diffY = endY - startY;
-
-            // Solo actuar si el movimiento horizontal es mayor que el vertical (para permitir scroll)
             if (Math.abs(diffX) > Math.abs(diffY)) {
                 if (Math.abs(diffX) > threshold) {
                     if (diffX < 0) changeMonth(1); 
@@ -954,10 +1297,11 @@
                 const controlsContainer = document.createElement('div');
                 controlsContainer.className = 'flex items-center gap-2';
 
+                // BOTÓN CALCULADORA SECCIÓN 2 (ABRE CASH COUNTER)
                 const btnCalc = document.createElement('button');
                 btnCalc.className = 'control-btn w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold bg-indigo-500/20 border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/40 hover:text-white transition-all shadow-[0_0_10px_rgba(99,102,241,0.1)]';
                 btnCalc.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16" y1="14" y2="18"/><path d="M16 10h.01"/><path d="M12 10h.01"/><path d="M8 10h.01"/><path d="M12 14h.01"/><path d="M8 14h.01"/><path d="M12 18h.01"/><path d="M8 18h.01"/></svg>';
-                btnCalc.onclick = () => openCalculator(inputId);
+                btnCalc.onclick = () => CashCounter.open(inputId);
 
                 const btnMinus = document.createElement('button');
                 btnMinus.className = 'control-btn w-12 h-12 rounded-xl flex items-center justify-center text-xl font-bold';
@@ -1459,72 +1803,6 @@
             } else {
                 performSave();
             }
-        }
-
-        // CALCULADORA FUNCIONES
-        function openCalculator(targetId) {
-            currentCalcInputId = targetId;
-            calcExpression = '';
-            calcResult = 0;
-            updateCalcDisplay();
-            toggleBodyLock(true); // LOCK
-            document.getElementById('calculatorModal').classList.add('open');
-        }
-
-        function closeCalculator() {
-            document.getElementById('calculatorModal').classList.remove('open');
-            currentCalcInputId = null;
-            toggleBodyLock(false); // UNLOCK
-        }
-
-        function calcInput(val) {
-            const display = document.getElementById('calcDisplay');
-            
-            if (val === 'C') {
-                calcExpression = '';
-                calcResult = 0;
-            } else if (val === 'DEL') {
-                calcExpression = calcExpression.toString().slice(0, -1);
-            } else if (val === '=') {
-                try {
-                    const result = eval(calcExpression.replace(/[^-()\d/*+.]/g, ''));
-                    calcResult = result || 0;
-                    calcExpression = String(calcResult);
-                } catch {
-                    calcExpression = 'Error';
-                    calcResult = 0;
-                }
-            } else {
-                calcExpression += val;
-                try {
-                    const tempExp = calcExpression.replace(/[^-()\d/*+.]/g, '');
-                    if (!['+', '-', '*', '/'].includes(tempExp.slice(-1))) {
-                         calcResult = eval(tempExp) || 0;
-                    }
-                } catch {}
-            }
-            updateCalcDisplay();
-        }
-
-        function updateCalcDisplay() {
-            document.getElementById('calcExpression').textContent = calcExpression;
-            document.getElementById('calcDisplay').textContent = formatCurrency(calcResult);
-            document.getElementById('calcProfitDisplay').textContent = formatCurrency(calcResult * tuPorcentaje);
-        }
-
-        function applyCalculatorResult() {
-            if(currentCalcInputId && calcResult > 0) {
-                let valueToApply = calcResult;
-                if(currentCalcInputId === 'manualAmount') {
-                    valueToApply = calcResult * tuPorcentaje;
-                }
-                const input = document.getElementById(currentCalcInputId);
-                if(input) {
-                    input.value = parseFloat(valueToApply.toFixed(2));
-                    input.dispatchEvent(new Event('input'));
-                }
-            }
-            closeCalculator();
         }
 
         // INICIALIZACIÓN
